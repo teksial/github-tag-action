@@ -10,7 +10,7 @@ custom_tag=${CUSTOM_TAG}
 source=${SOURCE:-.}
 dryrun=${DRY_RUN:-false}
 initial_version=${INITIAL_VERSION:-0.0.0}
-tag_context=${TAG_CONTEXT:-repo}
+current_version=${CURRENT_VERSION:-0}
 suffix=${PRERELEASE_SUFFIX:-beta}
 verbose=${VERBOSE:-true}
 
@@ -24,7 +24,7 @@ echo -e "\tCUSTOM_TAG: ${custom_tag}"
 echo -e "\tSOURCE: ${source}"
 echo -e "\tDRY_RUN: ${dryrun}"
 echo -e "\tINITIAL_VERSION: ${initial_version}"
-echo -e "\tTAG_CONTEXT: ${tag_context}"
+echo -e "\tCURRENT_VERSION: ${current_version}"
 echo -e "\tPRERELEASE_SUFFIX: ${suffix}"
 echo -e "\tVERBOSE: ${verbose}"
 
@@ -45,17 +45,8 @@ echo "pre_release = $pre_release"
 git fetch --tags
 
 # get latest tag that looks like a semver (with or without v)
-case "$tag_context" in
-    *repo*) 
-        tag=$(git for-each-ref --sort=-v:refname --format '%(refname)' | cut -d / -f 3- | grep -E "^v?[0-9]+.[0-9]+.[0-9]+$" | head -n1)
-        pre_tag=$(git for-each-ref --sort=-v:refname --format '%(refname)' | cut -d / -f 3- | grep -E "^v?[0-9]+.[0-9]+.[0-9]+(-$suffix.[0-9]+)?$" | head -n1)
-        ;;
-    *branch*) 
-        tag=$(git tag --list --merged HEAD --sort=-v:refname | grep -E "^v?[0-9]+.[0-9]+.[0-9]+$" | head -n1)
-        pre_tag=$(git tag --list --merged HEAD --sort=-v:refname | grep -E "^v?[0-9]+.[0-9]+.[0-9]+(-$suffix.[0-9]+)?$" | head -n1)
-        ;;
-    * ) echo "Unrecognised context"; exit 1;;
-esac
+tag=$(git for-each-ref --sort=-v:refname --format '%(refname)' | cut -d / -f 3- | grep -E "^v?$current_version.[0-9]+.[0-9]+$" | head -n1)
+pre_tag=$(git for-each-ref --sort=-v:refname --format '%(refname)' | cut -d / -f 3- | grep -E "^v?$current_version.[0-9]+.[0-9]+(-$suffix.[0-9]+)?$" | head -n1)    
 
 # if there are none, start tags at INITIAL_VERSION which defaults to 0.0.0
 if [ -z "$tag" ]
